@@ -11,4 +11,8 @@ Create "images" directory and copy any images there _(jpe?g|png|gif)_.
  node server.js 
 ```
 
+![Image](screen1.png)
+![Image](screen2.png)
+
+
 **P.S.:** If you find a bug or you have an idea for a feature to add, please consider dropping me a messages on Reddit (r/starlightrobotics or u/starlightrobotics).
