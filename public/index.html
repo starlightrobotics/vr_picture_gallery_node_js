@@ -1,0 +1,178 @@
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <a-scene>
+
+      <!-- Random stars -->
+      <script>
+        AFRAME.registerComponent('random-stars', {
+          init: function () {
+            const sceneEl = this.el;
+            const starCount = 100;
+            for (let i = 0; i < starCount; i++) {
+              const x = (Math.random() - 0.5) * 200;
+              const y = Math.random() * 100 + 30;
+              const z = (Math.random() - 0.5) * 200;
+              const star = document.createElement('a-sphere');
+              star.setAttribute('position', `${x} ${y} ${z}`);
+              star.setAttribute('radius', '0.2');
+              star.setAttribute('color', '#ffffff');
+              star.setAttribute('material', 'emissive: #ffffff; emissiveIntensity: 1');
+              sceneEl.appendChild(star);
+            }
+          }
+        });
+
+        AFRAME.registerComponent('jump-controls', {
+          init: function () {
+            this.isJumping = false;
+            this.velocityY = 0;
+            this.gravity = -0.05;
+            this.jumpStrength = 0.5;
+
+            window.addEventListener('keydown', (e) => {
+              if (e.code === 'Space' && !this.isJumping) {
+                this.velocityY = this.jumpStrength;
+                this.isJumping = true;
+              }
+            });
+          },
+          tick: function () {
+            if (!this.isJumping) return;
+            this.velocityY += this.gravity;
+            const pos = this.el.getAttribute('position');
+            pos.y += this.velocityY;
+
+            if (pos.y <= 1.6) {
+              pos.y = 1.6;
+              this.isJumping = false;
+              this.velocityY = 0;
+            }
+            this.el.setAttribute('position', pos);
+          }
+        });
+
+        AFRAME.registerComponent('dynamic-gallery', {
+          init: async function () {
+            const sceneEl = this.el;
+            const response = await fetch('/gallery-data');
+            const images = await response.json();
+
+            const numGalleries = 5;
+            const spacingZ = 10;
+            const spacingX = 10;
+            const standardHeight = 3;
+            const scaleFactor = 1.5;
+            const chunkSize = Math.ceil(images.length / numGalleries);
+
+            for (let g = 0; g < numGalleries; g++) {
+              const galleryImages = images.slice(g * chunkSize, (g + 1) * chunkSize);
+              const xOffset = (g - (numGalleries - 1) / 2) * spacingX;
+
+              // Walls and carpet per gallery
+              const wallHeight = 8;
+              const wallDepth = 100;
+              const carpetWidth = 4;
+              const wallY = wallHeight / 2;
+
+              const wallLeft = document.createElement('a-box');
+              wallLeft.setAttribute('position', `${xOffset - 4} ${wallY} 0`);
+              wallLeft.setAttribute('width', 0.1);
+              wallLeft.setAttribute('height', wallHeight);
+              wallLeft.setAttribute('depth', wallDepth);
+              wallLeft.setAttribute('color', '#5C4033');
+              sceneEl.appendChild(wallLeft);
+
+              const wallRight = document.createElement('a-box');
+              wallRight.setAttribute('position', `${xOffset + 4} ${wallY} 0`);
+              wallRight.setAttribute('width', 0.1);
+              wallRight.setAttribute('height', wallHeight);
+              wallRight.setAttribute('depth', wallDepth);
+              wallRight.setAttribute('color', '#5C4033');
+              sceneEl.appendChild(wallRight);
+
+              const carpet = document.createElement('a-box');
+              carpet.setAttribute('position', `${xOffset} 0.01 0`);
+              carpet.setAttribute('rotation', '-90 0 0');
+              carpet.setAttribute('width', carpetWidth);
+              carpet.setAttribute('height', wallDepth);
+              carpet.setAttribute('depth', 0.1);
+              carpet.setAttribute('color', '#8B0000');
+              sceneEl.appendChild(carpet);
+
+              // Paintings
+              galleryImages.forEach((img, i) => {
+                const zPos = -20 + Math.floor(i / 2) * spacingZ;
+                const baseWidth = standardHeight * img.aspectRatio;
+                const baseHeight = standardHeight;
+                const width = (baseWidth * scaleFactor).toFixed(2);
+                const height = (baseHeight * scaleFactor).toFixed(2);
+
+                const xPos = (i % 2 === 0) ? xOffset - 3.9 : xOffset + 3.9;
+                const rotationY = (i % 2 === 0) ? 90 : -90;
+                const yOffset = 1.5;
+
+                const imageGroup = document.createElement('a-entity');
+                imageGroup.setAttribute('position', `${xPos} ${height / 2 + yOffset} ${zPos}`);
+                imageGroup.setAttribute('rotation', `0 ${rotationY} 0`);
+
+                const frame = document.createElement('a-plane');
+                frame.setAttribute('width', parseFloat(width) + 0.2);
+                frame.setAttribute('height', parseFloat(height) + 0.2);
+                frame.setAttribute('color', '#4B3621');
+                frame.setAttribute('position', '0 0 -0.01');
+                imageGroup.appendChild(frame);
+
+                const painting = document.createElement('a-image');
+                painting.setAttribute('src', `/images/${img.filename}`);
+                painting.setAttribute('width', width);
+                painting.setAttribute('height', height);
+                painting.setAttribute('position', '0 0 0');
+                imageGroup.appendChild(painting);
+
+                sceneEl.appendChild(imageGroup);
+              });
+            }
+          }
+        });
+      </script>
+    </head>
+
+  <body>
+
+    <!-- Night sky -->
+    <a-sky color="#0b0c2a"></a-sky>
+
+    <!-- Ground -->
+    <a-plane 
+      position="0 0 0" 
+      rotation="-90 0 0" 
+      width="200" 
+      height="200" 
+      color="#301934">
+    </a-plane>
+
+    <!-- Full moon -->
+    <a-sphere 
+      position="30 50 -40" 
+      radius="3" 
+      color="#ffffff"
+      material="emissive: #ffffff; emissiveIntensity: 1">
+    </a-sphere>
+
+    <!-- Player -->
+    <a-entity id="player"
+      camera
+      wasd-controls
+      look-controls
+      jump-controls
+      position="0 1.6 5">
+    </a-entity>
+
+    <!-- Components -->
+    <a-entity random-stars></a-entity>
+    <a-entity dynamic-gallery></a-entity>
+
+    </a-scene>
+  </body>
+</html>
