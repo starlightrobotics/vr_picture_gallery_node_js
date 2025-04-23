@@ -1,7 +1,8 @@
-# VR Picture gallery on Node JS
-
+# VR Picture gallery on Node JS and A Frame
+ 
 Automatically generates paintings on walls from the "images" directory, keeping relevant ratios of the images.
 
+Built-in WASD control, for a virtual tour without a VR headset.
 
 Create "images" directory and copy any images there _(jpe?g|png|gif)_.
 
